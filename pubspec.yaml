@@ -73,6 +73,8 @@ flutter:
   - assets/w4-s2/insect.jpg
   - assets/w4-s2/girl.jpg
   - assets/w4-s2/man.jpg
+  - assets/w6-s2/image.png
+  - assets/w6-s2/moew.jpg
 
 
   # To add assets to your application, add an assets section, like this:
