@@ -71,7 +71,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
               context: context,
               initialDate: selectedDate ?? DateTime.now(),
               firstDate: DateTime(2015),
-              lastDate: DateTime(2025),
+              lastDate: DateTime(2100),
             );
             if (picked != null) {
               setState(() {

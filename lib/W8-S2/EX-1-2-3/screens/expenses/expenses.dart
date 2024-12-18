@@ -39,15 +39,14 @@ class _ExpensesState extends State<Expenses> {
     // Clear snack bar if needed
       clearSnackBars();
 
-      // Display a snack bar with the specified duration and action
-      showSnackBar(
+      // Display a snack bar 
+    showSnackBar(
         duration: const Duration(seconds: 3),
         onAction: () {
           setState(() {
             _registeredExpenses.add(removedExpense);
           });
         },
-        text: 'Insert a new expense here',
       );
     });
   }
@@ -70,9 +69,9 @@ class _ExpensesState extends State<Expenses> {
   }
 
   void showSnackBar({
-    required String text,
     required Duration duration,
-    required VoidCallback onAction,
+    required VoidCallback 
+    onAction,
   }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
