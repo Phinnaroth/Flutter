@@ -15,11 +15,13 @@ enum ReminderCategory {
   maintenance('Maintenance',  Icons.build),
   birthdays('Birthdays',  Icons.cake),
   anniversaries('Anniversaries', Icons.favorite),
-  miscellaneous('Miscellaneous',  Icons.category);
+  miscellaneous('Miscellaneous',  Icons.category),
+  others('Others', Icons.content_paste_go);
 
   final String name;
   final IconData icon;
 
 
   const ReminderCategory(this.name, this.icon);
+
 }

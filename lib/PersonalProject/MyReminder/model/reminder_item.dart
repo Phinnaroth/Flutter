@@ -17,6 +17,4 @@ class Reminder {
   final DateTime dateTime;
   final ReminderCategory category;
   bool taskCompleted;
-
-
 }

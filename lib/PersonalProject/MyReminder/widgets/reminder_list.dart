@@ -1,107 +1,135 @@
 import 'package:flutter/material.dart';
-import 'package:myproject/PersonalProject/MyReminder/data/sample_task.dart';
 import 'package:myproject/PersonalProject/MyReminder/model/reminder_item.dart';
-import 'package:myproject/PersonalProject/MyReminder/widgets/reminder_task.dart';
+import 'package:myproject/PersonalProject/MyReminder/widgets/reminder_tile.dart';
+import 'package:myproject/PersonalProject/MyReminder/widgets/reminder_form.dart';
 
-class ReminderListScreen extends StatefulWidget {
-  const ReminderListScreen({super.key});
-
-  @override
-  State<ReminderListScreen> createState() => _ReminderListScreenState();
+enum Mode {
+  creating,
+  editing,
 }
-
-class _ReminderListScreenState extends State<ReminderListScreen> {
-  final List<Reminder> _taskItem = reminderTask;
-
-  void onCreate() async {
-    final newTask = await Navigator.of(context).push<Reminder>(
-      MaterialPageRoute(builder: (ctx) => const NewTask()),
-    );
-    if (newTask != null) {
-      setState(() {
-        _taskItem.add(newTask);
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Widget content = const Center(child: Text('No tasks yet'));
-
-    void checkBoxChanged(bool? value, int index) {
-      setState(() {
-        _taskItem[index].taskCompleted = value ?? false;
-      });
-    }
-
-    if (_taskItem.isNotEmpty) {
-      content = ListView.builder(
-        itemCount: _taskItem.length,
-        itemBuilder: (ctx, index) => ReminderTile(
-          reminderItem: _taskItem[index],
-          taskCompleted: _taskItem[index].taskCompleted,
-          onChanged: (value) {
-            checkBoxChanged(value, index);
-          },
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reminder', style: TextStyle(color: Colors.white),),
-        centerTitle: true,
-        toolbarHeight: 60.2,
-        toolbarOpacity: 0.8,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-              bottomRight: Radius.circular(25),
-              bottomLeft: Radius.circular(25)),
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: onCreate,
-        child: const Icon(Icons.add),
-      ),
-      body: content,
-    );
-  }
-}
-
-class ReminderTile extends StatelessWidget {
-  final Reminder reminderItem;
-  final bool taskCompleted;
-  final ValueChanged<bool?> onChanged;
-
-  const ReminderTile({
-    required this.reminderItem,
-    required this.taskCompleted,
-    required this.onChanged,
+class ReminderList extends StatefulWidget {
+  const ReminderList({
     super.key,
+    required this.tasks,
+    required this.onRemovedTask,
+    required this.completedTasks,
   });
 
+  final List<Reminder> tasks;
+  final List<Reminder> completedTasks;
+  final Function(Reminder) onRemovedTask;
+
+  @override
+  _ReminderListState createState() => _ReminderListState();
+}
+
+class _ReminderListState extends State<ReminderList> {
+  void checkBoxChanged(bool? value, int index) {
+    setState(() {
+      widget.tasks[index].taskCompleted = value ?? false;
+
+      if (widget.tasks[index].taskCompleted) {
+        Reminder completedTask = widget.tasks.removeAt(index);
+        widget.completedTasks.add(completedTask);
+      }
+    });
+  }
+
+  void _editTask(Reminder item, int index) async {
+    final updatedTask = await Navigator.of(context).push<Reminder>(
+      MaterialPageRoute(
+        builder: (ctx) => NewTask(
+          mode: Mode.editing,
+          reminderList: item,
+        ),
+      ),
+    );
+
+    if (updatedTask != null) {
+      setState(() {
+        int taskIndex = widget.tasks.indexWhere((task) => task.id == updatedTask.id);
+        if (taskIndex != -1) {
+          widget.tasks[taskIndex] = updatedTask;
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        title: Text(
-          reminderItem.title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(reminderItem.notes),
-        leading: SizedBox(
-          width: 30,
-          height: 30,
-          child: Icon(reminderItem.category.icon),
-        ),
-        trailing: Checkbox(
-          value: taskCompleted,
-          onChanged: onChanged,
-        ),
-        onTap: () {
-          
-        },
-      ),
+    return widget.tasks.isNotEmpty
+        ? ListView.builder(
+            itemCount: widget.tasks.length,
+            itemBuilder: (ctx, index) => Dismissible(
+              background: Container(
+                color: Colors.red,
+                child: const Icon(Icons.delete, color: Colors.white,),
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.centerLeft,
+              ),
+              key: UniqueKey(),
+              confirmDismiss: (direction) async{
+                return _showDeleteComfirmationDialog(context);
+              },
+              onDismissed: (direction) {
+                setState(() {
+                  widget.tasks.removeAt(index);
+                });
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Task deleted'),
+                    duration: Duration(seconds: 3)
+                  ),
+                );
+              },
+              child: Card(
+                color: Colors.white,
+                elevation: 6,
+                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)
+                ),
+                child: ReminderTile(
+                  reminderItem: widget.tasks[index],
+                  taskCompleted: widget.tasks[index].taskCompleted,
+                  onChanged: (value) {
+                    checkBoxChanged(value, index);
+                  },
+                  onTap: () => _editTask(widget.tasks[index], index),
+                ),
+              ),
+            ),
+          )
+        : const Center(
+            child: Text('No tasks yet'),
+          );
+  }
+
+  Future<bool?> _showDeleteComfirmationDialog(BuildContext context){
+    return showDialog<bool>(
+      context: context, 
+      builder: (BuildContext content){
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text('Delete Reminders task'),
+          content: const Text('Are you sure, you want to delete this task'),
+          actions: [
+            TextButton(
+              onPressed: (){
+                Navigator.of(context).pop(false);
+              }, 
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: (){
+                Navigator.of(context).pop(true);
+              }, 
+              child: const Text("Delete", style: TextStyle(color: Colors.redAccent),),
+            )
+          ],
+        );
+      }
     );
   }
 }

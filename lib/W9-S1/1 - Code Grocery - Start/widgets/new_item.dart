@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:myproject/W9-S1/1%20-%20Code%20Grocery%20-%20Start/models/grocery_item.dart';
 import '../models/grocery_category.dart';
-import '../models/mode.dart';
+import '../models/grocery_item.dart';
+
+enum Mode { creating, editing , normal , selection}
 
 class NewItem extends StatefulWidget {
-   final Mode mode;
-   final GroceryItem? editedItem;
-
-
-  const NewItem({super.key, required this.mode, this.editedItem});
+  final Mode mode;
+  final GroceryItem? existingItem;
+  const NewItem({super.key, required this.mode, this.existingItem});
 
   @override
   State<NewItem> createState() {
@@ -17,34 +16,34 @@ class NewItem extends StatefulWidget {
 }
 
 class _NewItemState extends State<NewItem> {
-  // We create a key to access and control the state of the Form.
   final _formKey = GlobalKey<FormState>();
 
   String _enteredName = '';
   int _enteredQuantity = 1;
-  GroceryCategory _selectedCatgory = GroceryCategory.fruit;
+  GroceryCategory _selectedCategory = GroceryCategory.fruit;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.mode == Mode.editing && widget.existingItem != null) {
+      _enteredName = widget.existingItem!.name;
+      _enteredQuantity = widget.existingItem!.quantity;
+      _selectedCategory = widget.existingItem!.category;
+    }
+  }
 
   void _saveItem() {
-    // 1 - Validate the form
     bool isValid = _formKey.currentState!.validate();
     if (isValid) {
-      // 2 - Save the form to get last entered values
       _formKey.currentState!.save();
 
+      final newItem = GroceryItem(
+        name: _enteredName,
+        quantity: _enteredQuantity,
+        category: _selectedCategory,
+        id: widget.existingItem?.id ?? 'item-${DateTime.now().toString()}',
+      );
 
-    final enterName = _enteredName;
-    final enterQty = _enteredQuantity;
-    final enterCategory = _selectedCatgory;
-
-    
-
-    GroceryItem newItem = GroceryItem(
-          id: 'item-${DateTime.now().toString()}', 
-          name: enterName, 
-          quantity: enterQty, 
-          category: enterCategory
-        );
-      
       Navigator.of(context).pop(newItem);
     }
   }
@@ -63,24 +62,21 @@ class _NewItemState extends State<NewItem> {
     return null;
   }
 
-  // TODO: validate quantity
-  String? validateQuantity(String? quantity) {
-  if (quantity == null || 
-      quantity.isEmpty || 
-      int.tryParse(quantity) == null || 
-      int.tryParse(quantity)! <= 0) {
-    return 'Must be a valid, positive number';
+  String? validateQuantity(String? value) {
+    if (value == null ||
+        value.isEmpty ||
+        int.tryParse(value) == null ||
+        int.parse(value) <= 0) {
+      return 'Must be a valid, positive number.';
+    }
+    return null;
   }
-  return null;
-}
-
-bool get isEditing => widget.mode == Mode.editing;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.mode == Mode.creating ? 'Add a new item' : 'Edit item'),
+        title: Text(widget.mode == Mode.editing ? 'Edit Item' : 'Add a new item'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(12),
@@ -91,7 +87,7 @@ bool get isEditing => widget.mode == Mode.editing;
               TextFormField(
                 maxLength: 50,
                 decoration: const InputDecoration(
-                  label: Text('Name'),
+                  labelText: 'Name',
                 ),
                 initialValue: _enteredName,
                 validator: validateTitle,
@@ -106,23 +102,26 @@ bool get isEditing => widget.mode == Mode.editing;
                   Expanded(
                     child: TextFormField(
                       decoration: const InputDecoration(
-                        label: Text('Quantity'),
+                        labelText: 'Quantity',
                       ),
                       initialValue: _enteredQuantity.toString(),
                       validator: validateQuantity,
-                      onSaved: (quantity) {
-                        _enteredQuantity = int.parse(quantity!);
+                      keyboardType: TextInputType.number,
+                      onSaved: (value) {
+                        _enteredQuantity = int.parse(value!);
                       },
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: DropdownButtonFormField<GroceryCategory>(
-                      value: _selectedCatgory,
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                      ),
+                      value: _selectedCategory,
                       items: [
                         for (final category in GroceryCategory.values)
                           DropdownMenuItem<GroceryCategory>(
-
                             value: category,
                             child: Row(
                               children: [
@@ -138,7 +137,9 @@ bool get isEditing => widget.mode == Mode.editing;
                           ),
                       ],
                       onChanged: (value) {
-                        _selectedCatgory = value!;
+                        setState(() {
+                          _selectedCategory = value!;
+                        });
                       },
                     ),
                   ),
@@ -154,9 +155,8 @@ bool get isEditing => widget.mode == Mode.editing;
                   ),
                   ElevatedButton(
                     onPressed: _saveItem,
-                    child: Text(widget.mode == Mode.creating ? 'Add' : 'Edit'),
+                    child: Text(widget.mode == Mode.editing ? 'Save Changes' : 'Add Item'),
                   )
-
                 ],
               ),
             ],

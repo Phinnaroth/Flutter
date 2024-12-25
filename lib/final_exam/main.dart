@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:myproject/PersonalProject/MyReminder/widgets/reminder_navigation_bar.dart';
- 
+import 'package:myproject/final_exam/widgets/course_view.dart';
 
-void main() async{
+
+void main() {
   runApp(const MyApp());
 }
 
@@ -23,7 +23,9 @@ class MyApp extends StatelessWidget {
         ),
         scaffoldBackgroundColor: Colors.white,
       ),
-      home: const ReminderScreen(),
+      home:  const CourseDetails() ,
+
+
     );
   }
 }

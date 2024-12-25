@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+
+import '../../models/expense.dart';
 import 'expenses_form.dart';
 import 'expenses_list.dart';
-import '../../models/expense.dart';
 
 class Expenses extends StatefulWidget {
-  const Expenses({Key? key});
+  const Expenses({super.key});
 
   @override
   State<Expenses> createState() {
@@ -28,27 +29,36 @@ class _ExpensesState extends State<Expenses> {
     ),
   ];
 
+  // Variables to store the recently removed expense and its index
+  Expense? _recentRemovedExpense;
+  int? _recentRemovedIndex;
+
   void onExpenseRemoved(Expense expense) {
     setState(() {
-
-      Expense removedExpense = expense;
-
-      _registeredExpenses.remove(expense);
-    
-
-    // Clear snack bar if needed
-      clearSnackBars();
-
-      // Display a snack bar 
-    showSnackBar(
-        duration: const Duration(seconds: 3),
-        onAction: () {
-          setState(() {
-            _registeredExpenses.add(removedExpense);
-          });
-        },
-      );
+      _recentRemovedIndex = _registeredExpenses.indexOf(expense); // Store the original index
+      _registeredExpenses.remove(expense); // Remove the expense
+      _recentRemovedExpense = expense; // Store the removed expense
     });
+
+    // Show the SnackBar with an undo option
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Expense deleted.'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            setState(() {
+              if (_recentRemovedExpense != null && _recentRemovedIndex != null) {
+                // Reinsert the expense at its original index
+                _registeredExpenses.insert(_recentRemovedIndex!, _recentRemovedExpense!);
+              }
+            });
+          },
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   void onExpenseCreated(Expense newExpense) {
@@ -64,54 +74,32 @@ class _ExpensesState extends State<Expenses> {
       builder: (ctx) => ExpenseForm(onCreated: onExpenseCreated),
     );
   }
-  void clearSnackBars() {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-  }
-
-  void showSnackBar({
-    required Duration duration,
-    required VoidCallback 
-    onAction,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Expense Deleted"),
-        duration: const Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: onAction,
-        ),
-      ),
-    );
-  }
 
   @override
-Widget build(BuildContext context) {
-  Widget bodyContent;
-
-  if (_registeredExpenses.isEmpty) {
-    bodyContent = const Center(
-      child: Text(
-        'No expenses found. Start adding some!',
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.blue[100],
+      appBar: AppBar(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: onAddPressed,
+          ),
+        ],
+        backgroundColor: Colors.blue[700],
+        title: const Text('Ronan-The-Best Expenses App'),
       ),
+      body: _registeredExpenses.isEmpty
+          ? const Center(
+              child: Text(
+                'No expenses found. Start adding some!',
+                style: TextStyle(fontSize: 15),
+              ),
+            )
+          : ExpensesList(
+              expenses: _registeredExpenses,
+              onExpenseRemoved: onExpenseRemoved,
+            ),
     );
-  } else {
-    bodyContent = ExpensesList(expenses: _registeredExpenses, onExpenseRemoved: onExpenseRemoved);
   }
-
-  return Scaffold(
-    backgroundColor: Colors.blue[100],
-    appBar: AppBar(
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.add),
-          onPressed: onAddPressed,
-        )
-      ],
-      backgroundColor: Colors.blue[700],
-      title: const Text('Ronan-The-Best Expenses App'),
-    ),
-    body: bodyContent,
-  );
-}
 }
