@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:myproject/PersonalProject/MyReminder/model/priority.dart';
 import 'package:myproject/PersonalProject/MyReminder/model/reminder_item.dart';
 import 'package:myproject/PersonalProject/MyReminder/widgets/reminder_tile.dart';
 import 'package:myproject/PersonalProject/MyReminder/widgets/reminder_form.dart';
@@ -24,6 +25,20 @@ class ReminderList extends StatefulWidget {
 }
 
 class _ReminderListState extends State<ReminderList> {
+
+  List<Reminder> getSortTasks(){
+    widget.tasks.sort((a, b){
+      if (a.priority == Priority.high && b.priority != Priority.high){
+        return -1; //high priority on top
+      }else if(a.priority != Priority.high && b.priority == Priority.high){
+        return 1;
+      }else{
+        return 0; //equal priority
+      }
+    });
+    return widget.tasks;
+  }
+  
   void checkBoxChanged(bool? value, int index) {
     setState(() {
       widget.tasks[index].taskCompleted = value ?? false;
@@ -57,6 +72,7 @@ class _ReminderListState extends State<ReminderList> {
 
   @override
   Widget build(BuildContext context) {
+    List<Reminder> sortedTasks = getSortTasks();
     return widget.tasks.isNotEmpty
         ? ListView.builder(
             itemCount: widget.tasks.length,
@@ -69,7 +85,7 @@ class _ReminderListState extends State<ReminderList> {
               ),
               key: UniqueKey(),
               confirmDismiss: (direction) async{
-                return _showDeleteComfirmationDialog(context);
+                return _showDeleteConfirmationDialog(context);
               },
               onDismissed: (direction) {
                 setState(() {
@@ -91,8 +107,8 @@ class _ReminderListState extends State<ReminderList> {
                   borderRadius: BorderRadius.circular(15)
                 ),
                 child: ReminderTile(
-                  reminderItem: widget.tasks[index],
-                  taskCompleted: widget.tasks[index].taskCompleted,
+                  reminderItem: sortedTasks[index],
+                  taskCompleted: sortedTasks[index].taskCompleted,
                   onChanged: (value) {
                     checkBoxChanged(value, index);
                   },
@@ -106,7 +122,7 @@ class _ReminderListState extends State<ReminderList> {
           );
   }
 
-  Future<bool?> _showDeleteComfirmationDialog(BuildContext context){
+  Future<bool?> _showDeleteConfirmationDialog(BuildContext context){
     return showDialog<bool>(
       context: context, 
       builder: (BuildContext content){

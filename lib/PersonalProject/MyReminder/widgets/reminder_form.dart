@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:myproject/PersonalProject/MyReminder/model/priority.dart';
 import 'package:myproject/PersonalProject/MyReminder/model/reminder_category.dart';
 import 'package:myproject/PersonalProject/MyReminder/model/reminder_item.dart';
 import 'package:myproject/PersonalProject/MyReminder/widgets/reminder_list.dart';
@@ -28,6 +29,7 @@ class _NewTaskState extends State<NewTask> {
   String _enterNote = '';
   ReminderCategory _category = ReminderCategory.others;
   DateTime? _selectedDate;
+  Priority _priority = Priority.low;
 
   //initial the old value to display on edit screeen
   @override
@@ -40,6 +42,7 @@ class _NewTaskState extends State<NewTask> {
         _enterNote = reminder.notes;
         _category = reminder.category;
         _selectedDate = reminder.dateTime;
+        _priority = reminder.priority;
       }
   }
 
@@ -53,6 +56,7 @@ class _NewTaskState extends State<NewTask> {
         notes: _enterNote,
         dateTime: _selectedDate ?? DateTime.now(),
         category: _category,
+        priority: _priority,
       );
 
       Navigator.of(context).pop(newTask);
@@ -66,6 +70,7 @@ class _NewTaskState extends State<NewTask> {
       _enterNote = '';
       _category = ReminderCategory.others;
       _selectedDate = null;
+      _priority = Priority.low;
     });
   }
 
@@ -168,6 +173,28 @@ class _NewTaskState extends State<NewTask> {
                       ),
               ),
               
+               const SizedBox(height: 10),
+              _buildInputCard(
+                  label: "Priority",
+                  icon: Icons.priority_high,
+                  child: DropdownButtonFormField<Priority>(
+                    value: _priority,
+                    items: Priority.values
+                        .map((priority) => DropdownMenuItem(
+                              value: priority,
+                              child: Text(priority.toString().split('.').last),
+                            ))
+                        .toList(),
+                    decoration: const InputDecoration.collapsed(
+                      hintText: '',
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _priority = value!;
+                      });
+                    },
+                  )),
+
               const SizedBox(height: 10),
 
               _buildInputCard(
